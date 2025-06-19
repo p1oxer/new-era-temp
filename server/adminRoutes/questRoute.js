@@ -6,10 +6,7 @@ import path from "path";
 import multer from "multer";
 import { generateImageVersions } from "../scripts/generateImages.js";
 import { translit } from "../scripts/translit.js";
-import {
-    updateLocaleWithQuest,
-    removeLocaleQuest,
-} from "../scripts/localization.js";
+import { updateLocaleWithQuest, removeLocaleQuest } from "../scripts/localization.js";
 
 const router = express.Router();
 

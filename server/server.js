@@ -27,14 +27,21 @@ import certificateAdminRouter from "./adminRoutes/certificateRoutes.js";
 import questAdminRouter from "./adminRoutes/questRoute.js";
 import imageAdminRouter from "./adminRoutes/image.js";
 import jwt from "jsonwebtoken";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+// import { fileURLToPath } from "url";
+// import { dirname, join } from "path";
 
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// const serveStatic = (pathToDir) => {
+//     return (req, res, next) => {
+//         res.header("Access-Control-Allow-Origin", "*");
+//         express.static(pathToDir)(req, res, next);
+//     };
+// };
 
-app.use("/uploads", express.static(join(__dirname, "../uploads")));
+// app.use("/uploads", serveStatic(join(__dirname, "../uploads")));
+// app.use("/files", serveStatic(join(__dirname, "../files")));
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
@@ -90,7 +97,6 @@ app.use("/api/group-description", groupDescriptionRouter);
 app.use("/api/certificates", certificateRouter);
 app.use("/api/quests", questRouter);
 
-
 // админские маршруты
 
 app.use("/api/admin/reviews", authenticate, isAdmin, reviewsAdminRouter);
@@ -118,6 +124,6 @@ app.use("/api/admin/quests", authenticate, isAdmin, questAdminRouter);
 
 // Запуск сервера
 const PORT = process.env.PORT || 5000;
-app.listen(PORT,'0.0.0.0', () => {
+app.listen(PORT, "0.0.0.0", () => {
     console.log(`Сервер запущен на http://localhost:${PORT}`);
 });
