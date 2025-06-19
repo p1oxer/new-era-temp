@@ -5,11 +5,11 @@ import fs from "fs/promises";
 import path from "path";
 import multer from "multer";
 import { generateImageVersions } from "../scripts/generateImages.js";
-import { translit } from "../../client/src/functions/translit.js";
+import { translit } from "../scripts/translit.js";
 import {
     updateLocaleWithQuest,
     removeLocaleQuest,
-} from "../../client/src/functions/localization.js";
+} from "../scripts/localization.js";
 
 const router = express.Router();
 
