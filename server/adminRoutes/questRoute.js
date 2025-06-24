@@ -11,7 +11,7 @@ import { updateLocaleWithQuest, removeLocaleQuest } from "../scripts/localizatio
 const router = express.Router();
 
 // Путь к клиентской директории public
-const CLIENT_PUBLIC_DIR = path.join(process.cwd(), "..", "uploads");
+const CLIENT_PUBLIC_DIR = "/var/www/uploads";
 
 const IMG_QUEST_DIR = "img/quests";
 const FULL_IMG_QUEST_DIR = path.join(CLIENT_PUBLIC_DIR, IMG_QUEST_DIR);
@@ -64,19 +64,29 @@ router.get("/", async (req, res) => {
     const { _sort = "id", _order = "ASC", _start = 0, _end = 5 } = req.query;
 
     try {
-        const startInt = parseInt(_start);
-        const endInt = parseInt(_end);
-        const limit = endInt - startInt;
-        const offset = startInt;
+        // Если _start и _end переданы → работаем как с react-admin (пагинация)
+        if (req.query._start !== undefined || req.query._end !== undefined) {
+            const startInt = parseInt(_start);
+            const endInt = parseInt(_end);
+            const limit = endInt - startInt;
+            const offset = startInt;
 
+            const [rows] = await db.query(
+                `SELECT * FROM quests ORDER BY ?? ${_order.toUpperCase()} LIMIT ? OFFSET ?`,
+                [_sort, limit, offset]
+            );
+
+            const [[{ total }]] = await db.query("SELECT COUNT(*) AS total FROM quests");
+
+            res.header("Content-Range", `quests ${startInt}-${endInt}/${total}`);
+            return res.json(rows);
+        }
+
+        // Если _start и _end НЕ переданы → отдай ВСЕ квесты для сайта
         const [rows] = await db.query(
-            `SELECT * FROM quests ORDER BY ?? ${_order.toUpperCase()} LIMIT ? OFFSET ?`,
-            [_sort, limit, offset]
+            `SELECT * FROM quests ORDER BY ?? ${_order.toUpperCase()}`,
+            [_sort]
         );
-
-        const [[{ total }]] = await db.query("SELECT COUNT(*) AS total FROM quests");
-
-        res.header("Content-Range", `quests ${startInt}-${endInt}/${total}`);
         return res.json(rows);
     } catch (err) {
         console.error(err);
@@ -265,7 +275,22 @@ router.post("/delete-image/:id", async (req, res) => {
 
         if (cleanImagePath) {
             const fullPath = path.join(CLIENT_PUBLIC_DIR, cleanImagePath);
-            await fs.unlink(fullPath).catch(() => {});
+
+            // Генерируем все возможные варианты файлов
+            const filesToDelete = [
+                fullPath,
+                fullPath.replace(/\.(\w+)$/, "-540.avif"),
+                fullPath.replace(/\.(\w+)$/, "-540.webp"),
+            ];
+
+            for (const file of filesToDelete) {
+                try {
+                    await fs.unlink(file).catch(() => {});
+                    console.log("Удален файл:", file);
+                } catch (err) {
+                    console.warn("Не удалось удалить файл:", file, err.message);
+                }
+            }
         }
 
         res.json({ success: true, remainingImages: updatedPaths });

@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+Disallow: /api/
+
+Disallow: /uploads/img/cert/
+Disallow: /uploads/video/
+
+Allow: /uploads/img/quests/
+Allow: /uploads/img/QuestsSwiper/
+Allow: /uploads/img/Sertificates/
+Allow: /uploads/img/Intro/
+
+Sitemap: https://new-era-quest.ru/sitemap.xml
+
+Crawl-delay: 1 

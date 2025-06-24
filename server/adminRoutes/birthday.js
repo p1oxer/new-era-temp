@@ -8,21 +8,31 @@ router.get("/", async (req, res) => {
     const { _sort = "id", _order = "ASC", _start = 0, _end = 5 } = req.query;
 
     try {
-        const startInt = parseInt(_start);
-        const endInt = parseInt(_end);
-        const limit = endInt - startInt;
-        const offset = startInt;
+        // Если _start и _end переданы → работаем как с react-admin (пагинация)
+        if (req.query._start !== undefined || req.query._end !== undefined) {
+            const startInt = parseInt(_start);
+            const endInt = parseInt(_end);
+            const limit = endInt - startInt;
+            const offset = startInt;
 
+            const [rows] = await db.query(
+                `SELECT * FROM birthday_offers ORDER BY ?? ${_order.toUpperCase()} LIMIT ? OFFSET ?`,
+                [_sort, limit, offset]
+            );
+
+            const [[{ total }]] = await db.query(
+                "SELECT COUNT(*) AS total FROM birthday_offers"
+            );
+
+            res.header("Content-Range", `birthday_offers ${startInt}-${endInt}/${total}`);
+            return res.json(rows);
+        }
+
+        // Если _start и _end НЕ переданы → отдай ВСЕ записи для сайта
         const [rows] = await db.query(
-            `SELECT * FROM birthday_offers ORDER BY ?? ${_order.toUpperCase()} LIMIT ? OFFSET ?`,
-            [_sort, limit, offset]
+            `SELECT * FROM birthday_offers ORDER BY ?? ${_order.toUpperCase()}`,
+            [_sort]
         );
-
-        const [[{ total }]] = await db.query(
-            "SELECT COUNT(*) AS total FROM birthday_offers"
-        );
-
-        res.header("Content-Range", `birthday_offers ${startInt}-${endInt}/${total}`);
         return res.json(rows);
     } catch (err) {
         console.error(err);

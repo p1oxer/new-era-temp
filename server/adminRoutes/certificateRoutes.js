@@ -6,7 +6,7 @@ import multer from "multer";
 import { generateImageVersions } from "../scripts/generateImages.js";
 const router = express.Router();
 
-const CLIENT_PUBLIC_DIR = path.join(process.cwd(), "..", "uploads");
+const CLIENT_PUBLIC_DIR = "/var/www/uploads";
 const IMG_DIR = "img/cert";
 const FULL_IMG_DIR = path.join(CLIENT_PUBLIC_DIR, IMG_DIR);
 
@@ -31,26 +31,36 @@ router.get("/", async (req, res) => {
     const { _sort = "id", _order = "ASC", _start = 0, _end = 5 } = req.query;
 
     try {
-        const startInt = parseInt(_start);
-        const endInt = parseInt(_end);
-        const limit = endInt - startInt;
-        const offset = startInt;
+        // Если _start и _end переданы → работаем как с react-admin (пагинация)
+        if (req.query._start !== undefined || req.query._end !== undefined) {
+            const startInt = parseInt(_start);
+            const endInt = parseInt(_end);
+            const limit = endInt - startInt;
+            const offset = startInt;
 
-        // Получаем данные
+            // Получаем данные
+            const [rows] = await db.query(
+                `SELECT * FROM certificates ORDER BY ?? ${_order.toUpperCase()} LIMIT ? OFFSET ?`,
+                [_sort, limit, offset]
+            );
+
+            // Общее количество записей
+            const [[{ total }]] = await db.query(
+                "SELECT COUNT(*) AS total FROM certificates"
+            );
+
+            // Устанавливаем Content-Range
+            res.header("Content-Range", `certificates ${startInt}-${endInt}/${total}`);
+
+            // Отправляем данные
+            return res.json(rows);
+        }
+
+        // Если _start и _end НЕ переданы → отдай ВСЕ записи для сайта
         const [rows] = await db.query(
-            `SELECT * FROM certificates ORDER BY ?? ${_order.toUpperCase()} LIMIT ? OFFSET ?`,
-            [_sort, limit, offset]
+            `SELECT * FROM certificates ORDER BY ?? ${_order.toUpperCase()}`,
+            [_sort]
         );
-
-        // Общее количество записей
-        const [[{ total }]] = await db.query(
-            "SELECT COUNT(*) AS total FROM certificates"
-        );
-
-        // Устанавливаем Content-Range
-        res.header("Content-Range", `certificates ${startInt}-${endInt}/${total}`);
-
-        // Отправляем данные
         return res.json(rows);
     } catch (err) {
         console.error(err);
@@ -114,7 +124,9 @@ router.put("/:id", async (req, res) => {
             return res.status(404).json({ error: "Сертификат не найден" });
         }
 
-        const images = image_paths ? image_paths : JSON.parse(currentData.image_paths || "[]");
+        const images = image_paths
+            ? image_paths
+            : JSON.parse(currentData.image_paths || "[]");
 
         // Обновляем запись в БД
         await db.query(

@@ -3,7 +3,7 @@
 import fs from "fs/promises";
 import path from "path";
 
-const LOCALES_DIR = path.join(process.cwd(), "..", "files");
+const LOCALES_DIR = "/var/www/files";
 const RU_LOCALE_PATH = path.join(LOCALES_DIR, "url-mapping.json");
 
 // === Существующая функция ===

@@ -27,8 +27,8 @@ import certificateAdminRouter from "./adminRoutes/certificateRoutes.js";
 import questAdminRouter from "./adminRoutes/questRoute.js";
 import imageAdminRouter from "./adminRoutes/image.js";
 import jwt from "jsonwebtoken";
-// import { fileURLToPath } from "url";
-// import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = dirname(__filename);
